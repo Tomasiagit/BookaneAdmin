@@ -8,7 +8,8 @@
         <template #activator="{ props }">
           <v-btn icon v-bind="props">
             <v-avatar size="32">
-              <v-img :src="user.photo" alt="Profile" />
+             <!-- <v-img :src="" alt="Profile" />---> 
+               <v-icon color="white">mdi-account</v-icon>
             </v-avatar>
           </v-btn>
         </template>

@@ -35,6 +35,9 @@
                 User
               </th>
               <th class="text-left">
+              Classe
+            </th>
+              <th class="text-left">
               Pacote
             </th>
             <th class="text-left">
@@ -53,12 +56,37 @@
            
           </thead>
           <tbody>
-            <tr v-for="item in pagamentos" :key="item.id" style="background-color: #eef7fa;">
+             <tr v-if="!pagamentosList.length" style="background-color: #eef7fa;">
+              <td colspan="4" class="text-center">Nenhum Pagamento encontrado!</td>
+             </tr>
+            
+             <tr v-for="item in pagamentosList" :key="item.id" style="background-color: #eef7fa;">
+             <!-- <template v-if="editingPagamento && editingPagamento.value.id === item.id">
+             <td><input v-model="editingPagamento.id"></td>
+             <td><input v-model="editingPagamento.user" /></td>
+             <td><input v-model="editingPagamento.classe" /></td>
+             <td><input v-model="editingPagamento.pacote" /></td>
+             <td><input v-model="editingPagamento.data_inicio" /></td>
+             <td><input v-model="editingPagamento.data_fim" /></td>
+             <td><input v-model="editingPagamento.estado" /></td>
+              <td>
+                <div style="display: flex; gap: 10px;">
+              <v-btn color="warning" small @click="SavePayment(item)">Salvar</v-btn>
+              <v-btn color="error" small @click="CancelEditPayment(item)">Cancelar</v-btn>
+              </div> 
+              </td>
+              </template> -->
+              
+              <!--               mmmm                        -->
+              
               <td style="color: black;">
                 {{ item.id }}
               </td>
               <td style="color: black;">
                 {{ item.user }}
+              </td>
+              <td style="color: black;">
+                {{ item.classe }}
               </td>
               <td style="color: black;">
                 {{ item.pacote }}
@@ -75,13 +103,12 @@
               
               <td>
                 <div style="display: flex; gap: 10px;">
-              <v-btn color="primary" small @click="viewUser(item)">Ver</v-btn>
               <v-btn color="warning" small @click="editUser(item)">Editar</v-btn>
               <v-btn color="error" small @click="deleteUser(item)">Apagar</v-btn>
-
                 </div>
-              
               </td>
+              
+             
             </tr>
           </tbody>
         </v-table>
@@ -99,96 +126,32 @@
 </template>
 
 
-<script>
-//import api from '@/config/api';
-//import DemoSimpleTableBasics from '@/layout/tables/DemoSimpleTableBasics.vue';
-export default {
-  name: "PacoteView",
-  components: {
-    //DemoSimpleTableBasics,
+<script setup>
+import api from '@/config/api';
+import { onMounted, ref } from 'vue';
+//import Swal from 'sweetalert2'
 
-  },
-  data() {
-    return {
-      status: [],
-      status_id: "",
-      pagamentos: [],
-      loading: false,
-      
-    }
-  },
-  methods: {
-    getStatus() {
-      // api.get("/status").then((res) => {
-      //   this.status = res.data
-      // })
-    },
-    getAllUsers() {
-      this.loading = true
-      console.log("get pacotes functon");
-      this.pagamentos = [
-        {
-           id :"1",
-           user :"Tomasia Guambe",
-           pacote :"Pacote 1",
-           estado :"Activo",
-           data_inicio :"2025-01-01",
-           data_fim :"2025-12-01",       
-        },
-        {
-           id :"1",
-           user :"Tomasia Guambe",
-           pacote :"Pacote 1",
-           estado :"Activo",
-           data_inicio :"2025-01-01",
-           data_fim :"2025-12-01",       
-        },
-        {
-           id :"1",
-           user :"Tomasia Guambe",
-           pacote :"Pacote 1",
-           estado :"Activo",
-           data_inicio :"2025-01-01",
-           data_fim :"2025-12-01",       
-        },
-        {
-           id :"1",
-           user :"Tomasia Guambe",
-           pacote :"Pacote 1",
-           estado :"Activo",
-           data_inicio :"2025-01-01",
-           data_fim :"2025-12-01",       
-        },
-      
-       
-        
-      ]
-      this.loading = false
-      
-    },
-    changeStatus() {
-      console.log(this.status_id)
-    },
-    byStatus(item) {
-      console.log(item)
-    }
-  },
-  created() {
-    this.getStatus()
-    this.getAllUsers()
-  },
-  // watch: {
-  //   status_id(newV, old) {
-  //     let data = []
-  //     this.activities.forEach((element) => {
-  //       if (element['status'] == newV) {
-  //         data.push(element)
-  //       }
-  //     })
-  //     this.activities = data
-  //   }
-  // }
+
+const pagamentosList = ref([]);
+
+const fetchPagamentos = async() =>{
+  try{
+
+    const response = await api.get('pagamentos');
+    pagamentosList.value = response.data.pagamentos;
+    console.log('Pagamrenos List', response.data.pagamentos);
+
+  }catch(e){
+    console.error('Erro ao buscar pagamentos:', e.response || e)
+
+  }
+
 }
+onMounted(() => {
+  fetchPagamentos()
+});
+
+
 </script>
 
 

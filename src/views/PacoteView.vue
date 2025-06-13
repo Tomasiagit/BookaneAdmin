@@ -2,13 +2,13 @@
 
 <template>
   <VRow>
-    <VCol cols="12">
+    <!-- <VCol cols="12">
       <v-card color="#eef7fa">
         <v-card-text>
           <VRow>
             <VCol cols="6">
 
-              <VTextField theme="dark" base-color="white" v-model="name" item-title="name" item-value="name"
+              <VTextField theme="dark" base-color="white" item-title="name" item-value="name"
                     label="Search" append-icon="mdi-search"></VTextField>
             </VCol>
             <VCol cols="3">
@@ -18,11 +18,10 @@
 
         </v-card-text>
       </v-card>
-    </VCol>
+    </VCol> -->
+
     <VCol cols="12">
-      
       <div class="" style="height: 10px;"></div>
-      
         <VCard color="#eef7fa">
         <v-card-title class="text-h6 font-weight-light" style="color: black">Todos pacotes</v-card-title>
           <v-table class="styled-table">
@@ -38,26 +37,40 @@
               Acção
             </th>
             </tr>
-           
           </thead>
+
           <tbody>
-            <tr v-for="item in pacotes" :key="item.valor" style="background-color: #eef7fa;">
-              <td style="color: black;">
-                {{ item.duracao }}
+            <tr v-if="!PacotesList.length" style="background-color: #eef7fa;">
+             <td colspan="4" class="text-center">Nenhum Pacote encontrado</td>
+            </tr>
+            
+            <tr v-for="item in PacotesList" :key="item.id" style="background-color: #eef7fa;">
+             <template v-if="editingPacote && editingPacote.id === item.id ">
+                <td><input v-model="editingPacote.duracao" /></td>
+                <td><input v-model="editingPacote.valor" /></td>
+                <td>
+                  <v-btn color="success" small @click="saveEditedPacote">Salvar</v-btn>
+                  <v-btn color="default" small @click="cancedlEditPacote">Cancelar</v-btn>
+                </td>
+             </template>
+
+             <template v-else>
+             <td style="color: black;">
+              {{ item.duracao }}
               </td>
-              <td style="color: black;">
-                {{ item.valor }}
+               <td style="color: black;">
+                
+                  {{ item.valor }}
               </td>
-              
               <td>
                 <div style="display: flex; gap: 10px;">
-                  <v-btn color="primary" small @click="viewUser(item)">Ver</v-btn>
-              <v-btn color="warning" small @click="editUser(item)">Editar</v-btn>
-              <v-btn color="error" small @click="deleteUser(item)">Apagar</v-btn>
-
+                <v-btn color="warning" small @click="editPacote(item)">Editar</v-btn>
+                <v-btn color="error" small @click="deletePacote(item)">Apagar</v-btn>
                 </div>
-              
               </td>
+             </template>
+              
+              
             </tr>
           </tbody>
         </v-table>
@@ -75,77 +88,69 @@
 </template>
 
 
-<script>
-//import api from '@/config/api';
-//import DemoSimpleTableBasics from '@/layout/tables/DemoSimpleTableBasics.vue';
-export default {
-  name: "PacoteView",
-  components: {
-    //DemoSimpleTableBasics,
+<script setup>
+import api from '@/config/api';
+import { ref, onMounted } from 'vue'
+import Swal from 'sweetalert2' 
 
-  },
-  data() {
-    return {
-      status: [],
-      status_id: "",
-      pacotes: [],
-      loading: false,
-      
-    }
-  },
-  methods: {
-    getStatus() {
-      // api.get("/status").then((res) => {
-      //   this.status = res.data
-      // })
-    },
-    getAllUsers() {
-      this.loading = true
-      console.log("get pacotes functon");
-      this.pacotes = [
-        {
-          duracao: 'Trimestre',
-          valor: '260',         
-        },
-        {
-          duracao: 'Semestre',
-          valor: '500',         
-        },
-       
-        {
-          duracao: '1-ano',
-          valor: '850',         
-        },
-       
-       
-        
-      ]
-      this.loading = false
-      
-    },
-    changeStatus() {
-      console.log(this.status_id)
-    },
-    byStatus(item) {
-      console.log(item)
-    }
-  },
-  created() {
-    this.getStatus()
-    this.getAllUsers()
-  },
-  // watch: {
-  //   status_id(newV, old) {
-  //     let data = []
-  //     this.activities.forEach((element) => {
-  //       if (element['status'] == newV) {
-  //         data.push(element)
-  //       }
-  //     })
-  //     this.activities = data
-  //   }
-  // }
+const PacotesList  = ref([]);
+const editingPacote = ref(null);
+//-----------------------------------Fetch--Pacotes----------------//
+ const fetchPacotes = async () => {
+  try{
+    const response = await api.get('pacotes');
+    console.log('ResponsePacotes: ',response.data);
+    PacotesList.value = response.data.pacotes;
+  }catch(e){
+    console.e('Erro ao buscar Pacotes:', e.response || e)
+  }
 }
+onMounted(() => {
+  fetchPacotes()
+})
+
+const editPacote = (pacote) => {
+editingPacote.value = { ...pacote}
+}
+const cancedlEditPacote = () => {
+  editingPacote.value = null;
+}
+
+const saveEditedPacote = async () => {
+  try{
+    await api.post(`pacotes/${editingPacote.value.id}`, editingPacote.value);
+    await fetchPacotes();
+    editingPacote.value = null;
+
+  }catch(e){
+     console.error('Erro ao salvar:', e);
+  }
+}
+
+const deletePacote = async (pacote) =>{
+
+  const result = await Swal.fire({
+    title : 'Tem certeza?',
+    text: `Deseja apagar o pacote de ${pacote.valor}mts de ${pacote.duracao} de duração?`, 
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButton: true,
+    cancerButtonText: 'Cancelar'
+  });
+
+  if(result.isConfirmed){
+    try{
+      await api.delete(`pacotes/${pacote.id}`)
+      await fetchPacotes()       
+      Swal.fire('Pacote!', 'O Pacote foi removido.', 'success')
+
+    }catch(e){  
+    Swal.fire('Erro!', 'Não foi possível apagar o pacote.', 'error')
+    }
+
+  }
+}
+
 </script>
 
 

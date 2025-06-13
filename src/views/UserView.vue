@@ -59,8 +59,8 @@
                   <v-btn color="default" small @click="cancelEdit">Cancelar</v-btn>
                 </td>
               </template>
+              
               <template v-else>
-
               <td style="color: black;">
                 {{ item.name }}
               </td>
