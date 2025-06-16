@@ -7,6 +7,7 @@ import HomeView from '@/views/HomeView.vue'
 import UserView from '@/views/UserView.vue'
 import LivroView from '@/views/LivroView.vue'
 import PagamentoView from '@/views/PagamentoView.vue'
+import LivroForm from '@/views/LivroForm.vue'
 
 
 
@@ -52,6 +53,12 @@ const routes = [
         name: 'pacotes',
         component: AboutView,
         meta: { title: 'Todos Pacotes' },
+      },
+      {
+        path: '/livrosform',
+        name: 'Adicionar Livros',
+        component: LivroForm,
+        meta: { title: 'Publicar livro' },
       },
     ],
   },

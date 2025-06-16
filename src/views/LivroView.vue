@@ -12,7 +12,7 @@
                     label="Search" append-icon="mdi-search"></VTextField>
             </VCol>
             <VCol cols="3">
-              <v-btn color="#3d80c2" prepend-icon="mdi-add" style="margin-right: 10px;" to="/pagecustom">Novo Livro</v-btn>
+              <v-btn color="#3d80c2" prepend-icon="mdi-add" style="margin-right: 10px;" to="/livrosform">Novo Livro</v-btn>
             </VCol>
           </VRow>
 
