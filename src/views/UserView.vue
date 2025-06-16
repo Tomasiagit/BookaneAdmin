@@ -102,7 +102,7 @@ import Swal from 'sweetalert2'
 const usersList  = ref([]);
 const searchQuery = ref('');
 
-//------------------------------------------------Search---//---------------------------------------------
+//------------------------------------------------Search---//---
 
 const filteredUsers = computed(() => {
   return usersList.value.filter(user => 

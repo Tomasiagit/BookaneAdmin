@@ -8,7 +8,7 @@
           <VRow>
             <VCol cols="6">
 
-              <VTextField theme="dark" base-color="white" v-model="name" item-title="name" item-value="name"
+              <VTextField theme="dark" base-color="white" v-model="searchQuery" item-title="name" item-value="name"
                     label="Search" append-icon="mdi-search"></VTextField>
             </VCol>
             <VCol cols="3">
@@ -47,7 +47,27 @@
            
           </thead>
           <tbody>
-            <tr v-for="item in list_livros" :key="item.id" style="background-color: #eef7fa;">
+
+            <tr v-if="!filterLivros.length" style="background-color: #eef7fa;">
+              <td style="color: black;">
+                Nenhum Livro encontrado!
+              </td>
+            </tr>
+          <tr v-for="item in filterLivros" :key="item.id" style="background-color: #eef7fa;">
+          <template v-if="livroToEdit && livroToEdit.id === item.id">
+            <td><input v-model="livroToEdit.id"/></td>
+             <td><input v-model="livroToEdit.disciplina"/></td>
+             <td><input v-model="livroToEdit.classe"/></td>
+             <td><input v-model="livroToEdit.arquivo"/></td>
+                <td>
+                  <v-btn color="success" small @click="saveEdited">Salvar</v-btn>
+                  <v-btn color="default" small @click="cancelEdition">Cancelar</v-btn>
+                </td>
+
+              </template>
+          
+           <template v-else>
+           
               <td style="color: black;">
                 {{ item.id }}
               </td>
@@ -62,15 +82,15 @@
               </td>
               <td>
                 
-                  <div style="display: flex; gap: 10px;">
-              <v-btn color="primary" small @click="viewUser(item)">Ver</v-btn>
-              <v-btn color="warning" small @click="editUser(item)">Editar</v-btn>
-              <v-btn color="error" small @click="deleteUser(item)">Apagar</v-btn>
-
-                
-            </div>
+              <div style="display: flex; gap: 10px;">
+              <v-btn color="warning" small @click="editLivro(item)">Editar</v-btn>
+              <v-btn color="error" small @click="deleteLivro(item)">Apagar</v-btn>
+              </div>
               </td>
-            </tr>
+          </template>
+              </tr>
+            
+            
           </tbody>
         </v-table>
       </VCard>
@@ -87,81 +107,96 @@
 </template>
 
 
-<script>
-//import api from '@/config/api';
-//import DemoSimpleTableBasics from '@/layout/tables/DemoSimpleTableBasics.vue';
-export default {
-  name: "UserView",
-  components: {
-    //DemoSimpleTableBasics,
+<script setup>
+import api from '@/config/api';
+import { ref, onMounted, computed } from 'vue'
+import Swal from 'sweetalert2'
 
-  },
-  data() {
-    return {
-      status: [],
-      status_id: "",
-      list_livros: [],
-      loading: false,
-      
-    }
-  },
-  methods: {
-    getStatus() {
-      // api.get("/status").then((res) => {
-      //   this.status = res.data
-      // })
-    },
-    getAllUsers() {
-      this.loading = true
-      console.log("get users functon");
-      this.list_livros = [
-        {
-          id: 1,
-          disciplina: 'Portugues',
-          classe: '12',
-          arquivo: 'link',
-        },
-        {
-          id: 2,
-          disciplina: 'Matematica',
-          classe: '12',
-          arquivo: 'link',
-        }, 
-        {
-          id: 3,
-          disciplina: 'Ingles',
-          classe: '10',
-          arquivo: 'link',
-        },
-        
-        
-      ]
-      this.loading = false
-      
-    },
-    changeStatus() {
-      console.log(this.status_id)
-    },
-    byStatus(item) {
-      console.log(item)
-    }
-  },
-  created() {
-    this.getStatus()
-    this.getAllUsers()
-  },
-  // watch: {
-  //   status_id(newV, old) {
-  //     let data = []
-  //     this.activities.forEach((element) => {
-  //       if (element['status'] == newV) {
-  //         data.push(element)
-  //       }
-  //     })
-  //     this.activities = data
-  //   }
-  // }
+const livroList  = ref([]);
+const searchQuery = ref('');
+const livroToEdit = ref(null);
+
+//------------------------- LIStar Livros -------------------------//
+const fetchLivros = async () => {
+  try {
+    const response = await api.get('livros');
+    console.log('Data:', response.data);
+    livroList.value = response.data.livros;
+  } catch (error) {
+    console.error('Erro ao buscar os Livros:', error.response || error)
+  }
 }
+onMounted(() => {
+  fetchLivros()
+})
+
+//----------------------------Search --Livros ----------------//
+
+const filterLivros = computed(() => {
+  return livroList.value.filter(livro => 
+    livro.disciplina.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    livro.classe.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
+//---------------------------EDIT-livro---------------------------//
+
+
+
+
+const editLivro = (livro) => {
+  livroToEdit.value = { ...livro }
+}
+
+const cancelEdition = () => {
+  livroToEdit.value = null;
+}
+
+const saveEdited = async() =>  {
+
+  try{
+
+     await api.post(`/livros/${livroToEdit.value.id}`, livroToEdit.value);
+
+    await fetchLivros();
+    livroToEdit.value = null;
+      
+
+    const index = filterLivros.value.findIndex(u => u.id === livroToEdit.value.id)
+    if(index !== -1){
+      filterLivros.value[index] = { ...livroToEdit.value}
+    }
+   
+
+  }catch(e){
+    console.error('Erro ao salvar:', e);
+
+  }
+}
+
+//----------------------------------------------------------Apagar _USer-------------//
+const deleteLivro = async (livro) => {
+  const result = await Swal.fire({
+    title: 'Tem certeza?',
+    text: `Você deseja apagar o livro da disciplina de ${livro.disciplina} da ${livro.classe}?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sim, apagar',
+    cancelButtonText: 'Cancelar',
+  })
+
+  if (result.isConfirmed) {
+    try {
+     
+       await api.delete(`livros/${livro.id}`)
+       await fetchLivros()
+      Swal.fire('Apagado!', 'O Livro foi removido.', 'success')
+    } catch (err) {
+      Swal.fire('Erro!', 'Não foi possível apagar o Livro', 'error')
+    }
+  }
+}
+
 </script>
 
 
