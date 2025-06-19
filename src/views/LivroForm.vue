@@ -7,32 +7,36 @@
                         <span class="font-weight-bold">Publicar Um Livro</span>
                     </v-card-title>
                     <v-card-text>
-                        <v-form @submit.prevent="publicBook">
+                        <v-form @submit.prevent="publicarLivros">
                             <!-- Disciplina Dropdown -->
                             <v-select
-                                v-model="disciplina"
-                                :items="disciplinas"
-                                label="Disciplina"
-                                prepend-inner-icon="mdi-book-open"
-                                required
+                            v-model="discip"
+                            :items="disciplinaList"
+                            item-title="disciplina"
+                            item-value="disciplina"
+                            label="Selecione a Disciplina"
+                            prepend-inner-icon="mdi-book-open"
+                            required
                             ></v-select>
-
-                            <!-- Classe Radio Buttons -->
-                            <v-radio-group
-                                v-model="classe"
-                                label="Classe"
-                                row
-                                required
-                            >
-                                <v-radio label="1ª Classe" value="1"></v-radio>
-                                <v-radio label="2ª Classe" value="2"></v-radio>
-                                <v-radio label="3ª Classe" value="3"></v-radio>
+                        <!-- Disciplina Radio Option -->
+                            <v-container fluid>
+                            <p>Selecione a classe do livro</p>
+                            <v-radio-group inline v-model="cls">
+                            <v-radio v-for="item in classeList" :key=item.id :value="item" :label="item.classe"></v-radio>
                             </v-radio-group>
+                        </v-container>
 
                             <!-- Arquivo File Upload -->
                             <v-file-input
-                                v-model="arquivo"
+                                v-model="arqv"
                                 label="Arquivo"
+                                prepend-inner-icon="mdi-upload"
+                                required
+                                show-size
+                            ></v-file-input>
+                             <v-file-input
+                                v-model="imagem"
+                                label="Capa do livro"
                                 prepend-inner-icon="mdi-upload"
                                 required
                                 show-size
@@ -49,27 +53,85 @@
     </v-container>
 </template>
 
-<script>
-export default {
-    data() {
-        return {
-            disciplina: null,
-            disciplinas: [
-                'Matemática',
-                'Português',
-                'História',
-                'Geografia',
-                'Ciências'
-            ],
-            classe: null,
-            arquivo: null
-        };
-    },
-    methods: {
-        publicBook() {
-            // Handle form submission
-            // Example: console.log(this.disciplina, this.classe, this.arquivo);
-        }
+<script setup>
+
+import api from '@/config/api';
+import {onMounted, ref} from 'vue';
+import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2'
+
+const router = useRouter();
+const discip = ref(null);
+let disciplinaList = ref([]);
+const cls = ref(null);
+let classeList = ref([]);
+const arqv = ref(null);
+const imagem = ref(null);
+
+const fetchDisciplinas =async() =>{
+    try{
+        const response = await api.get('disciplinas');
+        disciplinaList.value = response.data.disciplinas;
+    }catch(e){
+        console.log('Erro',e);
     }
-};
+}
+
+const fetchClasses = async() => {
+    try{
+        const response = await api.get('classes');
+        classeList.value = response.data.classes; 
+
+    }catch(e){
+         console.log('Erro',e);
+    }
+}
+
+const publicarLivros = async() =>{
+    if(!discip.value || !cls.value || !arqv.value){
+        console.log("preencha todos campos");
+        return;
+    }
+    try{
+        const response= await api.post('livros',{
+           disciplina: discip.value,
+           classe: cls.value.classe,
+           classe_id: cls.value.id,
+           arquivo: arqv.value,
+           capa: imagem.value 
+
+        },
+        {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+   // 'Authorization': 'Bearer your_token_here' // Optional if needed
+  }
+}
+        
+    );
+
+        if (response.status === 200) {
+            router.push('/livros');
+        }
+
+    Swal.fire('Success', 'Livro publicado com sucesso', 'success')
+    }catch(e){
+      console.log('Error details:', e); 
+    const errorMessage = e.response?.data?.message 
+      || e.response?.data?.error 
+      || e.message 
+      || 'Upload Book Failed';
+      
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: errorMessage
+    });
+    }
+}
+
+onMounted(() => {
+  fetchDisciplinas()
+  fetchClasses()
+})
 </script>

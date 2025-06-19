@@ -39,11 +39,15 @@
               </th>
               <th class="text-left">
               Arquivo
-            </th>
-            <th class="text-left">
+              </th>
+              <th class="text-left">
+              Capa
+              </th>
+              <th class="text-left">
               Acção
-            </th>
-            </tr>
+              </th>
+             
+              </tr>
            
           </thead>
           <tbody>
@@ -59,6 +63,7 @@
              <td><input v-model="livroToEdit.disciplina"/></td>
              <td><input v-model="livroToEdit.classe"/></td>
              <td><input v-model="livroToEdit.arquivo"/></td>
+             <td><input v-model="livroToEdit.capa"/></td>
                 <td>
                   <v-btn color="success" small @click="saveEdited">Salvar</v-btn>
                   <v-btn color="default" small @click="cancelEdition">Cancelar</v-btn>
@@ -80,8 +85,11 @@
               <td style="color: black;">
                 {{ item.arquivo }}
               </td>
+              <td style="color: black;">
+                {{ item.capa}}
+              </td>
+
               <td>
-                
               <div style="display: flex; gap: 10px;">
               <v-btn color="warning" small @click="editLivro(item)">Editar</v-btn>
               <v-btn color="error" small @click="deleteLivro(item)">Apagar</v-btn>
@@ -153,27 +161,18 @@ const cancelEdition = () => {
 }
 
 const saveEdited = async() =>  {
-
   try{
-
-     await api.post(`/livros/${livroToEdit.value.id}`, livroToEdit.value);
-
+    await api.post(`/livros/${livroToEdit.value.id}`, livroToEdit.value);
     await fetchLivros();
     livroToEdit.value = null;
-      
-
     const index = filterLivros.value.findIndex(u => u.id === livroToEdit.value.id)
     if(index !== -1){
       filterLivros.value[index] = { ...livroToEdit.value}
     }
-   
-
   }catch(e){
     console.error('Erro ao salvar:', e);
-
   }
 }
-
 //----------------------------------------------------------Apagar _USer-------------//
 const deleteLivro = async (livro) => {
   const result = await Swal.fire({
@@ -184,10 +183,8 @@ const deleteLivro = async (livro) => {
     confirmButtonText: 'Sim, apagar',
     cancelButtonText: 'Cancelar',
   })
-
   if (result.isConfirmed) {
     try {
-     
        await api.delete(`livros/${livro.id}`)
        await fetchLivros()
       Swal.fire('Apagado!', 'O Livro foi removido.', 'success')
