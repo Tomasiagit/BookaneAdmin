@@ -5,9 +5,16 @@
                 <v-card elevation="10" class="pa-6">
                     <v-card-title class="text-h5 text-center primary">
                         <span class="font-weight-bold">Publicar Um Livro</span>
+                                    <div v-if="uploadProgress > 0">
+    <div class="progress-bar" style="height: 20px; background: #eee; border-radius: 5px;">
+      <div :style="{ width: uploadProgress + '%', background: '#4caf50', height: '100%', borderRadius: '5px' }"></div>
+    </div>
+    <p>{{ uploadProgress }}%</p>
+  </div>
+         
                     </v-card-title>
                     <v-card-text>
-                        <v-form @submit.prevent="publicarLivros">
+                           <v-form @submit.prevent="publicarLivros">
                             <!-- Disciplina Dropdown -->
                             <v-select
                             v-model="discip"
@@ -87,48 +94,54 @@ const fetchClasses = async() => {
     }
 }
 
-const publicarLivros = async() =>{
-    if(!discip.value || !cls.value || !arqv.value){
-        console.log("preencha todos campos");
-        return;
-    }
-    try{
-        const response= await api.post('livros',{
-           disciplina: discip.value,
-           classe: cls.value.classe,
-           classe_id: cls.value.id,
-           arquivo: arqv.value,
-           capa: imagem.value 
+const uploadProgress = ref(0); 
 
-        },
-        {
-  headers: {
-    'Content-Type': 'multipart/form-data',
-   // 'Authorization': 'Bearer your_token_here' // Optional if needed
+const publicarLivros = async () => {
+  if (!discip.value || !cls.value || !arqv.value) {
+    console.log("preencha todos campos");
+    return;
   }
-}
-        
-    );
 
-        if (response.status === 200) {
-            router.push('/livros');
-        }
+  const formData = new FormData();
+  formData.append('disciplina', discip.value);
+  formData.append('classe', cls.value.classe);
+  formData.append('classe_id', cls.value.id);
+  formData.append('arquivo', arqv.value);   // arquivo = input file
+  formData.append('capa', imagem.value);    // imagem = input file também?
 
-    Swal.fire('Success', 'Livro publicado com sucesso', 'success')
-    }catch(e){
-      console.log('Error details:', e); 
-    const errorMessage = e.response?.data?.message 
-      || e.response?.data?.error 
-      || e.message 
+  try {
+    const response = await api.post('livros', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        uploadProgress.value = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
+        console.log(`Progresso: ${uploadProgress.value}%`);
+      }
+    });
+
+    if (response.status === 200) {
+      router.push('/livros');
+    }
+
+    Swal.fire('Success', 'Livro publicado com sucesso', 'success');
+  } catch (e) {
+    console.log('Error details:', e);
+    const errorMessage = e.response?.data?.message
+      || e.response?.data?.error
+      || e.message
       || 'Upload Book Failed';
-      
+
     Swal.fire({
       icon: 'error',
       title: 'Error',
       text: errorMessage
     });
-    }
-}
+  }
+};
+
 
 onMounted(() => {
   fetchDisciplinas()
